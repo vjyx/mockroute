@@ -1,6 +1,9 @@
 from pathlib import Path
 import json
 
+class StorageError(Exception):
+    pass
+
 class Storage:
 
     def __init__(self, base_dir):
@@ -26,5 +29,8 @@ class Storage:
 
     def read_json(self, relative_path):
         path = self.base_dir / relative_path
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            raise StorageError(f"Cannot read {path}: {e}") from e

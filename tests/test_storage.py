@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from mockroute.storage import Storage
+from mockroute.storage import Storage, StorageError
 
 
 class TestStorage(unittest.TestCase):
@@ -36,6 +36,16 @@ class TestStorage(unittest.TestCase):
         self.storage.write_json("data/test.json", data)
         result = self.storage.read_json("data/test.json")
         self.assertEqual(result, data)
+
+    def test_read_missing_file_raises_storage_error(self):
+        with self.assertRaises(StorageError):
+            self.storage.read_json("data/missing.json")
+
+    def test_read_invalid_json_raises_storage_error(self):
+        bad = self.base / "bad.json"
+        bad.write_text('{"name": "Jane",}')      # trailing comma = invalid JSON
+        with self.assertRaises(StorageError):
+            self.storage.read_json("bad.json")
 
 
 if __name__ == "__main__":
