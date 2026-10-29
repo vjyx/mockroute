@@ -9,3 +9,8 @@ class Storage:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         p = self.base_dir / 'config.json'
         p.write_text('{}')
+
+        data_folder = self.base_dir / "data"
+        data_folder.mkdir(parents=True, exist_ok=True)
+        u = data_folder / 'users.json'
+        u.write_text('{}')

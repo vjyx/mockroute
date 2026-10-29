@@ -18,6 +18,10 @@ class TestStorage(unittest.TestCase):
         self.storage.init_workspace()
         self.assertTrue((self.base / "config.json").exists())
 
+    def test_init_creates_users_file(self):
+        self.storage.init_workspace()
+        self.assertTrue((self.base / "data" / "users.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
