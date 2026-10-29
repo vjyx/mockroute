@@ -22,6 +22,15 @@ class TestStorage(unittest.TestCase):
         self.storage.init_workspace()
         self.assertTrue((self.base / "data" / "users.json").exists())
 
+    def test_init_twice_keeps_existing_data(self):
+        self.storage.init_workspace()
+        users = self.base / "data" / "users.json"
+        users.write_text('{"a": 1}')          # simulate the user editing the file
+
+        self.storage.init_workspace()         # run init a second time
+
+        self.assertEqual(users.read_text(), '{"a": 1}')
+
 
 if __name__ == "__main__":
     unittest.main()
