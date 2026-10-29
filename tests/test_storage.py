@@ -31,6 +31,12 @@ class TestStorage(unittest.TestCase):
 
         self.assertEqual(users.read_text(), '{"a": 1}')
 
+    def test_write_then_read_json(self):
+        data = {"email": "a@b.com", "uid": 101}
+        self.storage.write_json("data/test.json", data)
+        result = self.storage.read_json("data/test.json")
+        self.assertEqual(result, data)
+
 
 if __name__ == "__main__":
     unittest.main()
