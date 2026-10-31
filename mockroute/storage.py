@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import os
 
 class StorageError(Exception):
     pass
@@ -24,8 +25,14 @@ class Storage:
     def write_json(self, relative_path, data):
         path = self.base_dir / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path , "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        temp_path = path.with_name(path.name + ".tmp")
+        try:
+            with open(temp_path , "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            os.replace(temp_path, path)
+        except (OSError, TypeError) as e:
+            temp_path.unlink(missing_ok=True)
+            raise StorageError(f"Cannot write {path}: {e}") from e
 
     def read_json(self, relative_path):
         path = self.base_dir / relative_path

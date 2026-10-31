@@ -47,6 +47,11 @@ class TestStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             self.storage.read_json("bad.json")
 
+    def test_write_json_leaves_no_temp_file(self):
+        self.storage.write_json("data/test.json", {"a": 1})
+        leftovers = list((self.base / "data").glob("*.tmp"))
+        self.assertEqual(leftovers, [])
+
 
 if __name__ == "__main__":
     unittest.main()
