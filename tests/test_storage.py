@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+import os
 
 from mockroute.storage import Storage, StorageError
 
@@ -52,6 +53,32 @@ class TestStorage(unittest.TestCase):
         leftovers = list((self.base / "data").glob("*.tmp"))
         self.assertEqual(leftovers, [])
 
+    def test_read_directory_raises_storage_error(self):
+        (self.base / "data").mkdir()
+        with self.assertRaises(StorageError):
+            self.storage.read_json("data")
+
+    def test_failed_write_keeps_original_file(self):
+        self.storage.write_json("data/users.json", {"name": "john"})
+
+        with self.assertRaises(StorageError):
+            self.storage.write_json("data/users.json", {"bad": Path("x")})
+
+        self.assertEqual(
+            self.storage.read_json("data/users.json"),
+            {"name": "john"},
+        )
+
+    def test_init_works_with_relative_base_dir(self):
+        original = Path.cwd()
+        os.chdir(self.base)
+        try:
+            storage = Storage("workspace")
+            storage.init_workspace()
+            self.assertTrue((self.base / "workspace" / "config.json").exists())
+            self.assertFalse((self.base / "workspace" / "workspace").exists())
+        finally:
+            os.chdir(original)
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,7 @@ import json
 import os
 
 class StorageError(Exception):
-    pass
+     """Raised when Storage cannot read or write a file."""
 
 class Storage:
 
@@ -11,18 +11,18 @@ class Storage:
         self.base_dir = Path(base_dir)
 
     def init_workspace(self):
-        self.base_dir.mkdir(parents=True, exist_ok=True)
-        p = self.base_dir / 'config.json'
-        if not p.exists():
-            p.write_text('{}')
+        self._create_if_missing("config.json")
+        self._create_if_missing("data/users.json")
 
-        data_folder = self.base_dir / "data"
-        data_folder.mkdir(parents=True, exist_ok=True)
-        u = data_folder / 'users.json'
-        if not u.exists():
-            u.write_text('{}')
+    def _create_if_missing(self, relative_path): #relative_path = folder/file_name
+        """Create a JSON file containing {} unless it already exists."""
+        path = self.base_dir / relative_path
+        if not path.exists():
+            self.write_json(relative_path, {})
 
     def write_json(self, relative_path, data):
+        """Save data as JSON, safely, to a path inside base_dir.
+        Raises StorageError if the data cannot be saved. """
         path = self.base_dir / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = path.with_name(path.name + ".tmp")
@@ -35,9 +35,11 @@ class Storage:
             raise StorageError(f"Cannot write {path}: {e}") from e
 
     def read_json(self, relative_path):
+        """Load and return the JSON data at a path inside base_dir.
+        Raises StorageError if the file is missing or contains invalid JSON."""
         path = self.base_dir / relative_path
         try:
             with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             raise StorageError(f"Cannot read {path}: {e}") from e
