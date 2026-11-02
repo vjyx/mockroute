@@ -14,7 +14,7 @@ class Storage:
         self._create_if_missing("config.json")
         self._create_if_missing("data/users.json")
 
-    def _create_if_missing(self, relative_path): 
+    def _create_if_missing(self, relative_path):
         """Create a JSON file containing {} unless it already exists."""
         path = self.base_dir / relative_path
         if not path.exists():
@@ -24,9 +24,9 @@ class Storage:
         """Save data as JSON, safely, to a path inside base_dir.
         Raises StorageError if the data cannot be saved. """
         path = self.base_dir / relative_path
-        path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = path.with_name(path.name + ".tmp")
         try:
+            path.parent.mkdir(parents=True, exist_ok=True)
             with open(temp_path , "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             os.replace(temp_path, path)

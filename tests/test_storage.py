@@ -80,5 +80,11 @@ class TestStorage(unittest.TestCase):
         finally:
             os.chdir(original)
 
+    def test_write_into_a_file_path_raises_storage_error(self):
+        blocker = self.base / "blocker"
+        blocker.write_text("I am a file, not a folder")
+        with self.assertRaises(StorageError):
+            self.storage.write_json("blocker/data.json", {"a": 1})
+
 if __name__ == "__main__":
     unittest.main()
