@@ -14,7 +14,7 @@ class Storage:
         self._create_if_missing("config.json")
         self._create_if_missing("data/users.json")
 
-    def _create_if_missing(self, relative_path): #relative_path = folder/file_name
+    def _create_if_missing(self, relative_path): 
         """Create a JSON file containing {} unless it already exists."""
         path = self.base_dir / relative_path
         if not path.exists():
