@@ -3,8 +3,6 @@ from pathlib import Path
 import sys
 from mockroute.storage import Storage, StorageError
 
-from mockroute.storage import Storage
-
 def main(argv=None, base_dir=None):
     if base_dir is None:
         base_dir = Path.home() / ".config" / "mockroute"

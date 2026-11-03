@@ -6,6 +6,7 @@ class StorageError(Exception):
      """Raised when Storage cannot read or write a file."""
 
 class Storage:
+    ROUTES_FILE = "data/routes.json"
 
     def __init__(self, base_dir):
         self.base_dir = Path(base_dir)
@@ -43,3 +44,23 @@ class Storage:
                 return json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             raise StorageError(f"Cannot read {path}: {e}") from e
+
+    def get_routes(self):
+        file_path = self.base_dir / self.ROUTES_FILE
+
+        if not file_path.exists():
+            return []
+
+        return self.read_json(self.ROUTES_FILE)
+
+    def add_route(self, path, method):
+        method = method.upper()
+
+        routes = self.get_routes()
+
+        for route in routes:
+            if route["path"] == path and route["method"] == method:
+                return
+        routes.append({"path": path, "method": method})
+
+        self.write_json(self.ROUTES_FILE, routes)

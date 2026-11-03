@@ -86,5 +86,31 @@ class TestStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             self.storage.write_json("blocker/data.json", {"a": 1})
 
+    def test_get_routes_is_empty_when_no_file(self):
+        self.assertEqual(self.storage.get_routes(), [])
+
+    def test_add_route_then_get_routes(self):
+        self.storage.add_route("/api/v1/auth", "POST")
+        self.assertEqual(
+            self.storage.get_routes(),
+            [{"path": "/api/v1/auth", "method": "POST"}],
+        )
+
+    def test_add_same_route_twice_does_not_duplicate(self):
+        self.storage.add_route("/api/v1/auth", "POST")
+        self.storage.add_route("/api/v1/auth", "POST")
+        self.assertEqual(len(self.storage.get_routes()), 1)
+
+    def test_method_is_stored_in_uppercase(self):
+        self.storage.add_route("/x", "post")
+        self.assertEqual(self.storage.get_routes()[0]["method"], "POST")
+
+    def test_get_routes_with_broken_file_raises_storage_error(self):
+        bad = self.base / "data" / "routes.json"
+        bad.parent.mkdir()
+        bad.write_text("{not json")
+        with self.assertRaises(StorageError):
+            self.storage.get_routes()
+
 if __name__ == "__main__":
     unittest.main()
