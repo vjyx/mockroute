@@ -6,6 +6,7 @@ from contextlib import redirect_stderr
 
 from mockroute.storage import Storage
 from mockroute.cli import main
+from contextlib import redirect_stderr, redirect_stdout
 
 
 class TestCli(unittest.TestCase):
@@ -44,6 +45,26 @@ class TestCli(unittest.TestCase):
     def test_add_defaults_to_get(self):
         main(["add", "/health"], base_dir=self.base)
         self.assertEqual(Storage(self.base).get_routes()[0]["method"], "GET")
+
+    def test_list_shows_routes(self):
+        main(["add", "/api/v1/auth", "--method", "POST"], base_dir=self.base)
+        main(["add", "/health"], base_dir=self.base)
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = main(["list"], base_dir=self.base)
+
+        self.assertEqual(code, 0)
+        self.assertIn("POST /api/v1/auth", out.getvalue())
+        self.assertIn("GET /health", out.getvalue())
+
+    def test_list_with_no_routes(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = main(["list"], base_dir=self.base)
+
+        self.assertEqual(code, 0)
+        self.assertIn("No routes", out.getvalue())
 
 if __name__ == "__main__":
     unittest.main()

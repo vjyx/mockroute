@@ -14,23 +14,28 @@ def main(argv=None, base_dir=None):
     add = sub.add_parser("add", help="register a route")
     add.add_argument("path")
     add.add_argument("--method", default="GET")
+    sub.add_parser("list", help="show registered routes")
 
     args = parser.parse_args(argv)
-    if args.command == "init":
-        try:
+    try:
+        if args.command == "init":
             storage = Storage(base_dir)
             storage.init_workspace()
-        except StorageError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            return 1
-        print(f"Workspace ready at {base_dir}")
+            print(f"Workspace ready at {base_dir}")
 
-    elif args.command == "add":
-        try:
+        elif args.command == "add":
             storage = Storage(base_dir)
             storage.add_route(args.path, args.method)
-        except StorageError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            return 1
-        print(f"Added {args.method} {args.path}")
+            print(f"Added {args.method} {args.path}")
+
+        elif args.command == "list":
+            routes = Storage(base_dir).get_routes()
+            if not routes:
+                print("No routes registered")
+            else:
+                for route in routes:
+                    print(f"{route['method']} {route['path']}")
+    except StorageError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     return 0
