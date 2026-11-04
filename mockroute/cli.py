@@ -11,6 +11,9 @@ def main(argv=None, base_dir=None):
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init", help="create the workspace")
+    add = sub.add_parser("add", help="register a route")
+    add.add_argument("path")
+    add.add_argument("--method", default="GET")
 
     args = parser.parse_args(argv)
     if args.command == "init":
@@ -21,4 +24,13 @@ def main(argv=None, base_dir=None):
             print(f"Error: {e}", file=sys.stderr)
             return 1
         print(f"Workspace ready at {base_dir}")
+
+    elif args.command == "add":
+        try:
+            storage = Storage(base_dir)
+            storage.add_route(args.path, args.method)
+        except StorageError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+        print(f"Added {args.method} {args.path}")
     return 0

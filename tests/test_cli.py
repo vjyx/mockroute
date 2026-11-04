@@ -4,6 +4,7 @@ from pathlib import Path
 import io
 from contextlib import redirect_stderr
 
+from mockroute.storage import Storage
 from mockroute.cli import main
 
 
@@ -32,6 +33,17 @@ class TestCli(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("Error:", err.getvalue())
 
+    def test_add_registers_route(self):
+        code = main(["add", "/api/v1/auth", "--method", "POST"], base_dir=self.base)
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            Storage(self.base).get_routes(),
+            [{"path": "/api/v1/auth", "method": "POST"}],
+        )
+
+    def test_add_defaults_to_get(self):
+        main(["add", "/health"], base_dir=self.base)
+        self.assertEqual(Storage(self.base).get_routes()[0]["method"], "GET")
 
 if __name__ == "__main__":
     unittest.main()
