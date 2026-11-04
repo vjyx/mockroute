@@ -15,26 +15,30 @@ def main(argv=None, base_dir=None):
     add.add_argument("path")
     add.add_argument("--method", default="GET")
     sub.add_parser("list", help="show registered routes")
+    start = sub.add_parser("start", help="start the server")
+    start.add_argument("--port", type=int, default=9000)
 
     args = parser.parse_args(argv)
+    storage = Storage(base_dir)
     try:
         if args.command == "init":
-            storage = Storage(base_dir)
             storage.init_workspace()
             print(f"Workspace ready at {base_dir}")
 
         elif args.command == "add":
-            storage = Storage(base_dir)
             storage.add_route(args.path, args.method)
             print(f"Added {args.method} {args.path}")
 
         elif args.command == "list":
-            routes = Storage(base_dir).get_routes()
+            routes = storage.get_routes()
             if not routes:
                 print("No routes registered")
             else:
                 for route in routes:
                     print(f"{route['method']} {route['path']}")
+
+        elif args.command == "start":
+            print(f"Would start server on port {args.port}")
     except StorageError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

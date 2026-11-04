@@ -2,8 +2,6 @@ import tempfile
 import unittest
 from pathlib import Path
 import io
-from contextlib import redirect_stderr
-
 from mockroute.storage import Storage
 from mockroute.cli import main
 from contextlib import redirect_stderr, redirect_stdout
@@ -65,6 +63,26 @@ class TestCli(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertIn("No routes", out.getvalue())
+
+    def test_start_prints_the_port(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = main(["start", "--port", "8080"], base_dir=self.base)
+        self.assertEqual(code, 0)
+        self.assertIn("8080", out.getvalue())
+
+    def test_start_default_port_is_9000(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            main(["start"], base_dir=self.base)
+        self.assertIn("9000", out.getvalue())
+
+    def test_start_rejects_a_non_number_port(self):
+        err = io.StringIO()
+        with redirect_stderr(err):
+            with self.assertRaises(SystemExit) as cm:
+                main(["start", "--port", "abc"], base_dir=self.base)
+        self.assertEqual(cm.exception.code, 2)
 
 if __name__ == "__main__":
     unittest.main()
