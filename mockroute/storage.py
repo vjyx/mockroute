@@ -6,6 +6,7 @@ class StorageError(Exception):
      """Raised when Storage cannot read or write a file."""
 
 class Storage:
+    ROUTES_FILE = "data/routes.json"
 
     def __init__(self, base_dir):
         self.base_dir = Path(base_dir)
@@ -14,7 +15,7 @@ class Storage:
         self._create_if_missing("config.json")
         self._create_if_missing("data/users.json")
 
-    def _create_if_missing(self, relative_path): #relative_path = folder/file_name
+    def _create_if_missing(self, relative_path):
         """Create a JSON file containing {} unless it already exists."""
         path = self.base_dir / relative_path
         if not path.exists():
@@ -24,9 +25,9 @@ class Storage:
         """Save data as JSON, safely, to a path inside base_dir.
         Raises StorageError if the data cannot be saved. """
         path = self.base_dir / relative_path
-        path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = path.with_name(path.name + ".tmp")
         try:
+            path.parent.mkdir(parents=True, exist_ok=True)
             with open(temp_path , "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             os.replace(temp_path, path)
@@ -43,3 +44,23 @@ class Storage:
                 return json.load(f)
         except (OSError, json.JSONDecodeError) as e:
             raise StorageError(f"Cannot read {path}: {e}") from e
+
+    def get_routes(self):
+        file_path = self.base_dir / self.ROUTES_FILE
+
+        if not file_path.exists():
+            return []
+
+        return self.read_json(self.ROUTES_FILE)
+
+    def add_route(self, path, method):
+        method = method.upper()
+
+        routes = self.get_routes()
+
+        for route in routes:
+            if route["path"] == path and route["method"] == method:
+                return
+        routes.append({"path": path, "method": method})
+
+        self.write_json(self.ROUTES_FILE, routes)

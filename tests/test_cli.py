@@ -1,0 +1,88 @@
+import tempfile
+import unittest
+from pathlib import Path
+import io
+from mockroute.storage import Storage
+from mockroute.cli import main
+from contextlib import redirect_stderr, redirect_stdout
+
+
+class TestCli(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.base = Path(self._tmp.name) / "workspace"
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_init_creates_workspace(self):
+        code = main(["init"], base_dir=self.base)
+        self.assertEqual(code, 0)
+        self.assertTrue((self.base / "config.json").exists())
+        self.assertTrue((self.base / "data" / "users.json").exists())
+
+    def test_init_reports_storage_error(self):
+        blocker = Path(self._tmp.name) / "blocker"
+        blocker.write_text("I am a file, not a folder")
+
+        err = io.StringIO()
+        with redirect_stderr(err):
+            code = main(["init"], base_dir=blocker)
+
+        self.assertEqual(code, 1)
+        self.assertIn("Error:", err.getvalue())
+
+    def test_add_registers_route(self):
+        code = main(["add", "/api/v1/auth", "--method", "POST"], base_dir=self.base)
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            Storage(self.base).get_routes(),
+            [{"path": "/api/v1/auth", "method": "POST"}],
+        )
+
+    def test_add_defaults_to_get(self):
+        main(["add", "/health"], base_dir=self.base)
+        self.assertEqual(Storage(self.base).get_routes()[0]["method"], "GET")
+
+    def test_list_shows_routes(self):
+        main(["add", "/api/v1/auth", "--method", "POST"], base_dir=self.base)
+        main(["add", "/health"], base_dir=self.base)
+
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = main(["list"], base_dir=self.base)
+
+        self.assertEqual(code, 0)
+        self.assertIn("POST /api/v1/auth", out.getvalue())
+        self.assertIn("GET /health", out.getvalue())
+
+    def test_list_with_no_routes(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = main(["list"], base_dir=self.base)
+
+        self.assertEqual(code, 0)
+        self.assertIn("No routes", out.getvalue())
+
+    def test_start_prints_the_port(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            code = main(["start", "--port", "8080"], base_dir=self.base)
+        self.assertEqual(code, 0)
+        self.assertIn("8080", out.getvalue())
+
+    def test_start_default_port_is_9000(self):
+        out = io.StringIO()
+        with redirect_stdout(out):
+            main(["start"], base_dir=self.base)
+        self.assertIn("9000", out.getvalue())
+
+    def test_start_rejects_a_non_number_port(self):
+        err = io.StringIO()
+        with redirect_stderr(err):
+            with self.assertRaises(SystemExit) as cm:
+                main(["start", "--port", "abc"], base_dir=self.base)
+        self.assertEqual(cm.exception.code, 2)
+
+if __name__ == "__main__":
+    unittest.main()
