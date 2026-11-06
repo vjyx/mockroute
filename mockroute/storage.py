@@ -7,13 +7,14 @@ class StorageError(Exception):
 
 class Storage:
     ROUTES_FILE = "data/routes.json"
+    USERS_FILE = "data/users.json"
 
     def __init__(self, base_dir):
         self.base_dir = Path(base_dir)
 
     def init_workspace(self):
         self._create_if_missing("config.json")
-        self._create_if_missing("data/users.json")
+        self._create_if_missing(self.USERS_FILE)
 
     def _create_if_missing(self, relative_path):
         """Create a JSON file containing {} unless it already exists."""
@@ -64,3 +65,11 @@ class Storage:
         routes.append({"path": path, "method": method})
 
         self.write_json(self.ROUTES_FILE, routes)
+
+    def get_users(self):
+        file_path = self.base_dir / self.USERS_FILE
+
+        if not file_path.exists():
+            return {}
+
+        return self.read_json(self.USERS_FILE)

@@ -112,5 +112,20 @@ class TestStorage(unittest.TestCase):
         with self.assertRaises(StorageError):
             self.storage.get_routes()
 
+    def test_get_users_is_empty_when_no_file(self):
+        self.assertEqual(self.storage.get_users(), {})
+
+    def test_get_users_returns_saved_users(self):
+        users = {"a@b.com": {"password": "x", "account_status": "active"}}
+        self.storage.write_json("data/users.json", users)
+        self.assertEqual(self.storage.get_users(), users)
+
+    def test_get_users_with_broken_file_raises_storage_error(self):
+        bad = self.base / "data" / "users.json"
+        bad.parent.mkdir()
+        bad.write_text("{not json")
+        with self.assertRaises(StorageError):
+            self.storage.get_users()
+
 if __name__ == "__main__":
     unittest.main()
