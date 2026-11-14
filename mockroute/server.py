@@ -20,6 +20,23 @@ class MockRouteHandler(BaseHTTPRequestHandler):
             self._send_json(405, {"error": "Method not allowed"})
             return
 
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "Request body must be valid JSON"})
+            return
+        
+        if not isinstance(data, dict):
+            self._send_json(400, {"error": "Request body must be a JSON object"})
+            return
+        email = data.get("email")
+        password = data.get("password")
+        if email == None or password == None:
+            self._send_json(400, {"error": "email and password are required"})
+            return
+
     def _send_json(self, status, body):
         reply = json.dumps(body).encode("utf-8")
         self.send_response(status)

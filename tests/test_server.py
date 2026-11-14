@@ -54,6 +54,20 @@ class TestServer(unittest.TestCase):
         status, body = self.request("GET", "/api/v1/auth")
         self.assertEqual(status, 405)
 
+    def test_invalid_json_returns_400(self):
+        status, body = self.request("POST", "/api/v1/auth", raw=b"{bad json")
+        self.assertEqual(status, 400)
+
+    def test_missing_password_returns_400(self):
+        status, body = self.request(
+            "POST", "/api/v1/auth", {"email": "developer@company.com"}
+        )
+        self.assertEqual(status, 400)
+
+    def test_json_that_is_not_an_object_returns_400(self):
+        status, body = self.request("POST", "/api/v1/auth", raw=b"[1, 2, 3]")
+        self.assertEqual(status, 400)
+
 
 if __name__ == "__main__":
     unittest.main()
