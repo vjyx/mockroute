@@ -27,15 +27,17 @@ class MockRouteHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             self._send_json(400, {"error": "Request body must be valid JSON"})
             return
-        
+
         if not isinstance(data, dict):
             self._send_json(400, {"error": "Request body must be a JSON object"})
             return
         email = data.get("email")
         password = data.get("password")
-        if email == None or password == None:
+        if email is None or password is None:
             self._send_json(400, {"error": "email and password are required"})
             return
+        status, body = self.server.authenticator.authenticate(email, password)
+        self._send_json(status, body)
 
     def _send_json(self, status, body):
         reply = json.dumps(body).encode("utf-8")

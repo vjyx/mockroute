@@ -9,12 +9,26 @@ from pathlib import Path
 from mockroute.storage import Storage
 from mockroute.server import create_server
 
+USERS = {
+    "developer@company.com": {
+        "password": "secureToken123",
+        "profile": {"uid": 101, "name": "Jane Doe", "role": "Engineer"},
+        "account_status": "active",
+    },
+    "suspended@company.com": {
+        "password": "secureToken123",
+        "profile": {"uid": 102, "name": "John Smith", "role": "Guest"},
+        "account_status": "locked",
+    },
+}
+
 
 class TestServer(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         storage = Storage(Path(self._tmp.name))
         storage.add_route("/api/v1/auth", "POST")
+        storage.write_json("data/users.json", USERS)
 
         self.httpd = create_server(storage, port=0)
         self.port = self.httpd.server_address[1]
@@ -68,6 +82,17 @@ class TestServer(unittest.TestCase):
         status, body = self.request("POST", "/api/v1/auth", raw=b"[1, 2, 3]")
         self.assertEqual(status, 400)
 
+    def test_valid_json_returns_200_and_profile(self):
+        status, body = self.request("POST", "/api/v1/auth", {"email": "developer@company.com", "password": "secureToken123"})
+        self.assertEqual(status, 200)
+
+    def test_valid_json_returns_401(self):
+        status, body = self.request("POST", "/api/v1/auth", {"email": "developer@company.com", "password": "badPassword"})
+        self.assertEqual(status, 401)
+
+    def test_valid_json_returns_403(self):
+        status, body = self.request("POST", "/api/v1/auth", {"email": "suspended@company.com", "password": "secureToken123"})
+        self.assertEqual(status, 403)
 
 if __name__ == "__main__":
     unittest.main()
