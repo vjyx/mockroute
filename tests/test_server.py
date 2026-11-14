@@ -82,17 +82,20 @@ class TestServer(unittest.TestCase):
         status, body = self.request("POST", "/api/v1/auth", raw=b"[1, 2, 3]")
         self.assertEqual(status, 400)
 
-    def test_valid_json_returns_200_and_profile(self):
+    def test_valid_login_returns_200_and_profile(self):
         status, body = self.request("POST", "/api/v1/auth", {"email": "developer@company.com", "password": "secureToken123"})
         self.assertEqual(status, 200)
+        self.assertEqual(body["profile"]["name"], "Jane Doe")
 
-    def test_valid_json_returns_401(self):
+    def test_wrong_password_returns_401(self):
         status, body = self.request("POST", "/api/v1/auth", {"email": "developer@company.com", "password": "badPassword"})
         self.assertEqual(status, 401)
+        self.assertEqual(body, {"error": "Invalid client credentials supplied"})
 
-    def test_valid_json_returns_403(self):
+    def test_locked_account_returns_403(self):
         status, body = self.request("POST", "/api/v1/auth", {"email": "suspended@company.com", "password": "secureToken123"})
         self.assertEqual(status, 403)
+        self.assertEqual(body["reason"], "Account Suspended")
 
 if __name__ == "__main__":
     unittest.main()
