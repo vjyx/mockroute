@@ -16,6 +16,9 @@ class MockRouteHandler(BaseHTTPRequestHandler):
         if result == "not_found":
             self._send_json(404, {"error": "Not found"})
             return
+        if result == "wrong_method":
+            self._send_json(405, {"error": "Method not allowed"})
+            return
 
     def _send_json(self, status, body):
         reply = json.dumps(body).encode("utf-8")
