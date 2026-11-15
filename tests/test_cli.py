@@ -65,17 +65,33 @@ class TestCli(unittest.TestCase):
         self.assertIn("No routes", out.getvalue())
 
     def test_start_prints_the_port(self):
+        def fake_serve(storage, host, port):
+            pass
+
         out = io.StringIO()
         with redirect_stdout(out):
-            code = main(["start", "--port", "8080"], base_dir=self.base)
+            code = main(["start", "--port", "8080"], base_dir=self.base, serve=fake_serve)
         self.assertEqual(code, 0)
         self.assertIn("8080", out.getvalue())
 
     def test_start_default_port_is_9000(self):
+        def fake_serve(storage, host, port):
+            pass
+
         out = io.StringIO()
         with redirect_stdout(out):
-            main(["start"], base_dir=self.base)
+            main(["start"], base_dir=self.base, serve=fake_serve)
         self.assertIn("9000", out.getvalue())
+
+    def test_start_runs_the_server_on_the_given_port(self):
+        calls = []
+
+        def fake_serve(storage, host, port):
+            calls.append(port)
+
+        code = main(["start", "--port", "8080"], base_dir=self.base, serve=fake_serve)
+        self.assertEqual(code, 0)
+        self.assertEqual(calls, [8080])
 
     def test_start_rejects_a_non_number_port(self):
         err = io.StringIO()

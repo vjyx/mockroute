@@ -2,8 +2,9 @@ import argparse
 from pathlib import Path
 import sys
 from mockroute.storage import Storage, StorageError
+from mockroute.server import run_server
 
-def main(argv=None, base_dir=None):
+def main(argv=None, base_dir=None, serve=run_server):
     if base_dir is None:
         base_dir = Path.home() / ".config" / "mockroute"
 
@@ -38,7 +39,8 @@ def main(argv=None, base_dir=None):
                     print(f"{route['method']} {route['path']}")
 
         elif args.command == "start":
-            print(f"Would start server on port {args.port}")
+            print(f"Starting server on port {args.port}")
+            serve(storage, "127.0.0.1", args.port)
     except StorageError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
