@@ -52,3 +52,13 @@ def create_server(storage, host="127.0.0.1", port=9000):
     httpd.router = Router(storage)
     httpd.authenticator = Authenticator(storage)
     return httpd
+
+def run_server(storage, host="127.0.0.1", port=9000):
+    httpd = create_server(storage, host, port)
+    print(f"mockroute listening on http://{host}:{port}  (Ctrl+C to stop)")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down")
+    finally:
+        httpd.server_close()
